@@ -44,57 +44,67 @@
         restrict: 'A',
         require: ['?^^dragToReorder', '?^^dragToReorderBind'],
         link: function (scope, element, attrs, ctrls) {
+          // var drag = true;
+          // element.on("drag",function(e){
+          //   scope.$apply(function(){
+          //     if(!angular.element(e.target).hasClass('List_Move')){
+          //      drag = false;
+          //     }
+          //   })
+          // })
 
-          if (!ngDragToReorder.isSupported()) return;
+              if (!ngDragToReorder.isSupported()) return;
 
-          var el = element[0], list, stringIdx, int, item, listCtrl = ctrls[0] ? ctrls[0] : ctrls[1],
-            newIdx, prevIdx, target, offsetY, dragging = 'dtr-dragging', over = 'dtr-over',
-            droppingAbove = 'dtr-dropping-above', droppingBelow = 'dtr-dropping-below', transition = 'dtr-transition',
-            eventName = 'dropped', delay = 1000, loaded = false, above = [], below = [], i, j,
-            topOffset = 50, bottomOffset = 50, windowHeight, listHeight, slowScroll = false, fastScroll = false,
-            listScrollbar = false, listEl, listScroll = false, itemOffestTop, startY, listTopY,
-            isChrome = !!window.chrome && !!window.chrome.webstore, isIE = !!document.documentMode,
-            isEdge = !isIE && !!window.StyleMedia, isFirefox = typeof InstallTrigger !== 'undefined',
-            isSafari = /constructor/i.test(window.HTMLElement) || (function (p) {
-                return p.toString() === "[object SafariRemoteNotification]";
-              })(!window['safari'] || safari.pushNotification);
+              var el = element[0], list, stringIdx, int, item, listCtrl = ctrls[0] ? ctrls[0] : ctrls[1],
+                newIdx, prevIdx, target, offsetY, dragging = 'dtr-dragging', over = 'dtr-over',
+                droppingAbove = 'dtr-dropping-above', droppingBelow = 'dtr-dropping-below', transition = 'dtr-transition',
+                eventName = 'dropped', delay = 1000, loaded = false, above = [], below = [], i, j,
+                topOffset = 50, bottomOffset = 50, windowHeight, listHeight, slowScroll = false, fastScroll = false,
+                listScrollbar = false, listEl, listScroll = false, itemOffestTop, startY, listTopY,
+                isChrome = !!window.chrome && !!window.chrome.webstore, isIE = !!document.documentMode,
+                isEdge = !isIE && !!window.StyleMedia, isFirefox = typeof InstallTrigger !== 'undefined',
+                isSafari = /constructor/i.test(window.HTMLElement) || (function (p) {
+                    return p.toString() === "[object SafariRemoteNotification]";
+                  })(!window['safari'] || safari.pushNotification);
 
-          if (attrs.dtrEvent) {
-            eventName = attrs.dtrEvent || 'dropped';
-          }
-
-          if (attrs.dtrInit) {
-            attrs.$observe('dtrInit', function (val) {
-              if (val && val !== 'false') {
-                addListeners();
-              } else if (loaded) {
-                removeListeners();
+              if (attrs.dtrEvent) {
+                eventName = attrs.dtrEvent || 'dropped';
               }
-              loaded = true;
-            });
-          } else {
-            addListeners();
-          }
+
+              if (attrs.dtrInit) {
+                attrs.$observe('dtrInit', function (val) {
+                  if (val && val !== 'false') {
+                     addListeners();
+                  } else if (loaded) {
+                     removeListeners();
+                  }
+                  loaded = true;
+                });
+              } else {
+                 addListeners();
+              }
+        
+         
 
           function addListeners() {
-            el.draggable = true;
+        //    el.draggable = true;
             el.addEventListener('dragstart', dragStart, false);
-            el.addEventListener('dragend', dragEnd, false);
             el.addEventListener('dragenter', dragEnter, false);
             el.addEventListener('dragleave', dragLeave, false);
             el.addEventListener('dragover', dragOver, false);
+            el.addEventListener('dragend', dragEnd, false);
             el.addEventListener('drop', drop, false);
             if (isChrome || isIE || isEdge)
               el.addEventListener('drag', drag, false);
           }
 
           function removeListeners() {
-            el.draggable = false;
+            //el.draggable = false;
             el.removeEventListener('dragstart', dragStart, false);
-            el.removeEventListener('dragend', dragEnd, false);
             el.removeEventListener('dragenter', dragEnter, false);
             el.removeEventListener('dragleave', dragLeave, false);
             el.removeEventListener('dragover', dragOver, false);
+            el.removeEventListener('dragend', dragEnd, false);
             el.removeEventListener('drop', drop, false);
             el.removeEventListener('drag', drag, false);
           }
@@ -217,14 +227,18 @@
             if (this.classList.contains(droppingAbove)) {
               if (prevIdx < scope.$index) {
                 newIdx = scope.$index - 1;
-              } else {
+              } else if (prevIdx > scope.$index){
                 newIdx = scope.$index;
+              }else{
+                newIdx = prevIdx;
               }
             } else {
               if (prevIdx < scope.$index) {
                 newIdx = scope.$index;
-              } else {
+              } else  if (prevIdx > scope.$index){
                 newIdx = scope.$index + 1;
+              }else{
+                newIdx = prevIdx;
               }
             }
 
@@ -289,8 +303,24 @@
 
           function dragLeave(e) {
             this.classList.remove(over);
-            this.classList.remove(droppingAbove);
-            this.classList.remove(droppingBelow);
+             offsetY = e.offsetY;
+             if (!this.classList.contains(dragging)) {
+              if (offsetY < (this.offsetHeight / 2)) {
+                this.classList.remove(droppingBelow);
+                this.classList.add(droppingAbove);
+                if (this.previousElementSibling)
+                 this.previousElementSibling.classList.add(droppingBelow);
+                 if (this.nextElementSibling)
+                 this.nextElementSibling.classList.remove(droppingAbove);
+              } else {
+                 this.classList.remove(droppingAbove);
+                this.classList.add(droppingBelow);
+                 if (this.previousElementSibling)
+                 this.previousElementSibling.classList.remove(droppingBelow);
+                 if (this.nextElementSibling)
+                 this.nextElementSibling.classList.add(droppingAbove);
+              }
+            }
             return false;
           }
 
